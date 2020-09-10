@@ -222,7 +222,14 @@
 (defes es-function-declaration (es-declaration es-function)
   ((id :initform (error "Must have an id.")
        :documentation "es-identifier")))
-;TODO add es->js 
+(defmethod es->js ((es es-function-declaration))
+  (with-accessors ((id id) (body body) (params params) (generator generator) (async async)) es
+    (concat (when async "async ")
+            (if generator
+                "function* "
+                "function ")
+            "(" (join "," (mapcar #'es->js params)) ")"
+            (es->js body))))
 
 
 ;;VARIABLE DECLARATION
@@ -249,3 +256,60 @@
     (concat (es->js id)
             (when init
               (concat " = " (es->js init))))))
+
+
+;;ARRAY EXPRESSION
+(defes es-array-expression (es-expression)
+  ((elements :documentation "(es-expression | es-spread-element | null)[]")))
+(defmethod es->js ((es es-array-expression))
+  (with-accessors ((elements elements)) es
+    (join ", " (mapcar #'es->js elements))))
+
+
+;;OBJECT EXPRESSION TODO
+;;PROPERTY TODO
+;;FUNCTION EXPRESSION TODO
+;;YIELD EXPRESSION TODO
+;;AWAIT EXPRESSION TODO
+;;SUPER EXPRESSION TODO
+;;SPREAD ELEMENT TODO
+;;UNARY EXPRESSION TODO
+;;UNARY OPERATOR TODO
+;;UPDATE EXPRESSION TODO
+;;UPDATE OPERATOR TODO
+;;BINARY EXPRESSION TODO
+;;BINARY OPERATOR TODO
+;;ASSIGNMENT EXPRESSION TODO
+;;ASSIGNMENT OPERATOR TODO
+;;LOGICAL EXPRESSION TODO
+;;LOGICAL OPERATOR TODO
+;;MEMBER EXPRESSION TODO
+;;CHAIN EXPRESSION TODO
+;;CONDITIONAL EXPRESSION TODO
+;;CALL EXPRESSION TODO
+;;NEW EXPRESSION TODO
+;;SEQUENCE EXPRESSION TODO
+;;IMPORT EXPRESSION TODO
+;;TEMPLATE LITERAL TODO
+;;TAGGED TEMPALTE EXPRESSION TODO
+;;TEMPLATE ELEMENT TODO
+;;OBJECT PATTERN TODO
+;;ARRAY PATTERN TODO
+;;REST ELEMENT TODO
+;;ASSIGNMENT PATTERN TODO
+;;CLASS TODO
+;;CLASS BODY TODO
+;;METHOD DEFINITION TODO
+;;CLASS DECLARATION TODO
+;;CLASS EXPRESSION TODO
+;;META PROPERTY TODO
+;;MODULE DECLARATION TODO
+;;MODULE SPECIFIER TODO
+;;IMPORT DECLARATION TODO
+;;IMPORT SPECIFIER TODO
+;;IMPORT DEFAULT SPECIFIER TODO
+;;IMPORT NAMESPACE SPECIFIER TODO
+;;EXPORT NAMED DECLARATION TODO
+;;EXPORT SPECIFIER TODO
+;;EXPORT DEFAULT DECLARATION TODO
+;;EXPORT ALL DECLARATION TODO
