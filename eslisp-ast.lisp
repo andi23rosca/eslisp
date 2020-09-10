@@ -269,10 +269,43 @@
 ;;OBJECT EXPRESSION TODO
 ;;PROPERTY TODO
 ;;FUNCTION EXPRESSION TODO
-;;YIELD EXPRESSION TODO
-;;AWAIT EXPRESSION TODO
-;;SUPER EXPRESSION TODO
-;;SPREAD ELEMENT TODO
+
+
+;;YIELD EXPRESSION
+(defes es-yield-expression (es-expression)
+  ((argument :documentation "es-expression | null")
+   (delegate :documentation "boolean")))
+(defmethod es->js ((es es-expression))
+  (with-accessors ((argument argument) (delegate delegate)) es
+    (concat (if delegate
+                "yield* "
+                "yield ")
+            (es->js argument)
+            ";")))
+
+;;AWAIT EXPRESSION
+(defes es-await-expression (es-expression)
+  ((argument :initform (error "Must have an argument.")
+             :documentation "es-expression")))
+(defmethod es->js ((es es-await-expression))
+  (with-accessors ((argument argument)) es
+    (concat "await " (es->js argument))))
+
+
+;;SUPER EXPRESSION
+(defes es-super-expression (es-node) ())
+(defmethod es->js ((es es-super-expression))
+  "super")
+
+
+;;SPREAD ELEMENT
+(defes es-spread-element (es-node)
+  ((argument :initform (error "Must have an argument.")
+             :documentation "es-expression")))
+(defmethod es->js ((es es-spread-element))
+  (concat "..." (es->js (argument es))))
+
+
 ;;UNARY EXPRESSION TODO
 ;;UNARY OPERATOR TODO
 ;;UPDATE EXPRESSION TODO
@@ -287,9 +320,34 @@
 ;;CHAIN EXPRESSION TODO
 ;;CONDITIONAL EXPRESSION TODO
 ;;CALL EXPRESSION TODO
+
+
 ;;NEW EXPRESSION TODO
-;;SEQUENCE EXPRESSION TODO
-;;IMPORT EXPRESSION TODO
+(defes es-new-expression (es-expression)
+  ((callee :initform (error "Must have a callee.")
+           :documentation "es-expression")
+   (arguments :documentation "(es-expression | es-spread-element)[]")))
+(defmethod es->js ((es es-new-expression))
+  (with-accessors ((callee callee) (arguments arguments)) es
+    (concat "new " (es->js callee)
+            "(" (join ", " (mapcar #'es->js arguments)) ")")))
+
+
+;;SEQUENCE EXPRESSION
+(defes es-sequence-expression (es-expression)
+  ((expressions :documentation "es-expression[]")))
+(defmethod es->js ((es es-sequence-expression))
+  (join ", " (mapcar #'es->js (expressions es))))
+
+
+;;IMPORT EXPRESSION
+(defes es-import-expression (es-expression)
+  ((source :initform (error "Must have source.")
+           :documentation "es-expression")))
+(defmethod es->js ((es es-import-expression))
+  (concat "import(" (es->js (source es)) ")"))
+
+
 ;;TEMPLATE LITERAL TODO
 ;;TAGGED TEMPALTE EXPRESSION TODO
 ;;TEMPLATE ELEMENT TODO
@@ -303,10 +361,32 @@
 ;;CLASS DECLARATION TODO
 ;;CLASS EXPRESSION TODO
 ;;META PROPERTY TODO
-;;MODULE DECLARATION TODO
-;;MODULE SPECIFIER TODO
+
+
+;;MODULE DECLARATION
+(defes es-module-declaration (es-node) ())
+
+
+;;MODULE SPECIFIER
+(defes es-module-specifier (es-node)
+  ((local :initform (error "Must have local")
+          :documentation "es-identifier")))
+
 ;;IMPORT DECLARATION TODO
-;;IMPORT SPECIFIER TODO
+
+
+;;IMPORT SPECIFIER
+(defes es-import-specifier (es-module-specifier)
+  ((imported :documentation "es-identifier")))
+(defmethod es->js ((es es-import-specifier))
+  (with-accessors ((local local) (imported imported)) es
+    (let ((l (es->js local))
+          (i (es->js imported)))
+      (if (equal l i)
+          l
+          (concat i " as " l)))))
+
+
 ;;IMPORT DEFAULT SPECIFIER TODO
 ;;IMPORT NAMESPACE SPECIFIER TODO
 ;;EXPORT NAMED DECLARATION TODO
