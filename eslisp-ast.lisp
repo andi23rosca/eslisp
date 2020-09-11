@@ -1,13 +1,14 @@
 (in-package :eslisp-ast)
 
+(defun newline ()
+  (format nil "~%"))
+
 
 (defun indent-string (str)
   (let ((lns (lines str)))
-    (join "~%"
+    (join (newline)
           (mapcar (lambda (s) (concat "  " s))
                   lns))))
-(defun newline ()
-  (format nil "~%"))
 
 
 (export 'es->js)
@@ -43,24 +44,13 @@
 
 
 ;;FUNCTION
-(export '(es-function id params body generator async))
-(defclass es-function (es-node)
-  ((id :initarg :id
-       :accessor id
-       :documentation "es-identifier | null")
-   (params :initarg :params
-           :accessor params
-           :documentation "es-pattern[]")
-   (body :initarg :body
-         :accessor body
-         :initform (error "Function must have a body.")
+(defes es-function (es-node)
+  ((id :documentation "es-identifier | null")
+   (params :documentation "es-pattern[]")
+   (body :initform (error "Function must have a body.")
          :documentation "es-function-body")
-   (generator :initarg :generator
-              :accessor generator
-              :documentation "boolean - If function is a generator.")
-   (async :initarg :async
-          :accessor async
-          :documentation "boolean - If function is async.")))
+   (generator :documentation "boolean - If function is a generator.")
+   (async :documentation "boolean - If function is async.")))
 (defmethod es->js ((es es-function))
   (with-accessors ((id id) (body body) (params params) (generator generator) (async async)) es
     (concat (when async "async ")
@@ -122,8 +112,10 @@
 (defmethod es->js ((es es-block-statement))
   (with-accessors ((body body)) es
     (let* ((converted (mapcar #'es->js body))
-           (block-string (str:join "~%" converted)))
-      (format nil "{~%~a~%}" (indent-string block-string)))))
+           (block-string (join (newline) converted)))
+      (concat "{" (newline)
+              (indent-string block-string)
+              (newline) "}"))))
 
 ;;FUNCTION BODY
 (export '(es-function-body))
@@ -365,6 +357,7 @@
                 "yield ")
             (es->js argument)
             ";")))
+
 
 ;;AWAIT EXPRESSION
 (defes es-await-expression (es-expression)
