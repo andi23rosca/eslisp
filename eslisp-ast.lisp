@@ -61,6 +61,15 @@
    (async :initarg :async
           :accessor async
           :documentation "boolean - If function is async.")))
+(defmethod es->js ((es es-function))
+  (with-accessors ((id id) (body body) (params params) (generator generator) (async async)) es
+    (concat (when async "async ")
+            (if generator
+                "function* "
+                "function ")
+            (when id (es->js id))
+            "(" (join "," (mapcar #'es->js params)) ")"
+            (es->js body))))
 
 ;;ARROW FUNCTION EXPRESSION TODO
 
@@ -297,15 +306,6 @@
 ;;FUNCTION DECLARATION
 (defes es-function-declaration (es-declaration es-function)
   ((id :documentation "es-identifier")))
-(defmethod es->js ((es es-function-declaration))
-  (with-accessors ((id id) (body body) (params params) (generator generator) (async async)) es
-    (concat (when async "async ")
-            (if generator
-                "function* "
-                "function ")
-            (when id (es->js id))
-            "(" (join "," (mapcar #'es->js params)) ")"
-            (es->js body))))
 
 
 ;;VARIABLE DECLARATION
@@ -350,7 +350,8 @@
 
 
 
-;;FUNCTION EXPRESSION TODO
+;;FUNCTION EXPRESSION
+(defes es-function-expression (es-expression es-function) ())
 
 
 ;;YIELD EXPRESSION
