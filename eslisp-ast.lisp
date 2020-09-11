@@ -30,6 +30,9 @@
 (defun filter-class-type (list type)
   (remove-if-not (lambda (x) (equal (type-of x) type)) list))
 
+;Default catchall
+(defmethod es->js ((es t))
+  "")
 
 ;;NODE
 (defclass es-node () ())
@@ -45,12 +48,16 @@
 
 ;;FUNCTION
 (defes es-function (es-node)
-  ((id :documentation "es-identifier | null")
-   (params :documentation "es-pattern[]")
+  ((id :initform nil
+       :documentation "es-identifier | null")
+   (params :initform nil
+           :documentation "es-pattern[]")
    (body :initform (error "Function must have a body.")
          :documentation "es-function-body")
-   (generator :documentation "boolean - If function is a generator.")
-   (async :documentation "boolean - If function is async.")))
+   (generator :initform nil
+              :documentation "boolean - If function is a generator.")
+   (async :initform nil
+          :documentation "boolean - If function is async.")))
 (defmethod es->js ((es es-function))
   (with-accessors ((id id) (body body) (params params) (generator generator) (async async)) es
     (concat (when async "async ")
@@ -58,7 +65,7 @@
                 "function* "
                 "function ")
             (when id (es->js id))
-            "(" (join "," (mapcar #'es->js params)) ")"
+            "(" (join "," (mapcar #'es->js params)) ") "
             (es->js body))))
 
 ;;ARROW FUNCTION EXPRESSION TODO
@@ -108,7 +115,8 @@
 
 ;;BLOCK STATEMENT
 (defes es-block-statement (es-statement)
-  ((body :documentation "es-statement[] - Body made up of statements")))
+  ((body :initform nil
+         :documentation "es-statement[] - Body made up of statements")))
 (defmethod es->js ((es es-block-statement))
   (with-accessors ((body body)) es
     (let* ((converted (mapcar #'es->js body))
@@ -131,7 +139,8 @@
 
 ;;RETURN STATEMENT
 (defes es-return-statement (es-statement)
-  ((argument :documentation "es-expression | null - What to return.")))
+  ((argument :initform nil
+             :documentation "es-expression | null - What to return.")))
 (defmethod es->js ((es es-return-statement))
   (with-accessors ((argument argument)) es
     (if argument
@@ -144,18 +153,26 @@
 
 ;;BREAK STATEMENT
 (defes es-break-statement (es-statement)
-  ((label :documentation "es-identifier | null")))
+  ((label :initform nil
+          :documentation "es-identifier | null")))
 (defmethod es->js ((es es-break-statement))
   (with-accessors ((label label)) es
-    (concat "break " (es->js label) ";")))
+    (concat "break"
+            (when label
+              (concat " " (es->js label)))
+            ";")))
 
 
 ;;CONTINUE STATEMENT
 (defes es-continue-statement (es-statement)
-  ((label :documentation "es-identifier | null")))
+  ((label :initform nil
+          :documentation "es-identifier | null")))
 (defmethod es->js ((es es-continue-statement))
   (with-accessors ((label label)) es
-    (concat "continue " (es->js label) ";")))
+    (concat "continue"
+            (when label
+              (concat " " (es->js label)))
+            ";")))
 
 
 ;;IF STATEMENT
@@ -187,8 +204,10 @@
 
 ;;SWITCH CASE
 (defes es-switch-case (es-node)
-  ((test :documentation "es-expression | null")
-   (consequent :documentation "es-statement[]")))
+  ((test :initform nil
+         :documentation "es-expression | null")
+   (consequent :initform nil
+               :documentation "es-statement[]")))
 (defmethod es->js ((es es-switch-case))
   (with-accessors ((test test) (consequent consequent)) es
     (concat "case " (if test (es->js test) "default") ":" (newline)
@@ -208,8 +227,10 @@
 (defes es-try-statement (es-statement)
   ((eblock :initform (error "Must have a block.")
            :documentation "es-block-statement")
-   (handler :documentation "es-catch-clause | null")
-   (finalizer :documentation "es-block-statement | null")))
+   (handler :initform nil
+            :documentation "es-catch-clause | null")
+   (finalizer :initform nil
+              :documentation "es-block-statement | null")))
 (defmethod es->js ((es es-try-statement))
   (with-accessors ((eblock eblock) (handler handler) (finalizer finalizer)) es
     (concat "try " (es->js eblock) (newline)
@@ -219,7 +240,8 @@
 
 ;;CATCH CLAUSE
 (defes es-catch-clause (es-node)
-  ((param :documentation "es-pattern | null")
+  ((param :initform nil
+          :documentation "es-pattern | null")
    (body :initform (error "Must have a body.")
          :documentation "es-block-statement")))
 (defmethod es->js ((es es-catch-clause))
@@ -252,9 +274,12 @@
 
 ;;FOR STATEMENT
 (defes es-for-statement (es-statement)
-  ((init :documentation "es-variable-declaration | es-expression | null")
-   (test :documentation "es-expression | null")
-   (update :documentation "es-expression | null")
+  ((init :initform nil
+         :documentation "es-variable-declaration | es-expression | null")
+   (test :initform nil
+         :documentation "es-expression | null")
+   (update :initform nil
+           :documentation "es-expression | null")
    (body :initform "Must have a body."
          :documentation "es-statement")))
 (defmethod es->js ((es es-for-statement))
@@ -283,7 +308,8 @@
 
 ;;FOR OF STATEMENT
 (defes es-for-of-statement (es-for-in-statement)
-  ((await :documentation "boolean")))
+  ((await :initform nil
+          :documentation "boolean")))
 (defmethod es->js ((Es es-for-of-statement))
   (with-accessors ((left left) (right right) (body body) (await await)) es
     (concat "for " (when await "await") "("
@@ -297,12 +323,14 @@
 
 ;;FUNCTION DECLARATION
 (defes es-function-declaration (es-declaration es-function)
-  ((id :documentation "es-identifier")))
+  ((id :initform nil
+       :documentation "es-identifier")))
 
 
 ;;VARIABLE DECLARATION
 (defes es-variable-declaration (es-declaration)
-  ((declarations :documentation "es-variable-declarator[]")
+  ((declarations :initform nil
+                 :documentation "es-variable-declarator[]")
    (kind :initform (error "Must have a kind.")
          :documentation ":var | :let | :const")))
 (defmethod es->js ((es es-variable-declaration))
@@ -318,7 +346,8 @@
 (defes es-variable-declarator (es-node)
   ((id :initform (error "Must have an id.")
        :documentation "es-pattern")
-   (init :documentation "es-expression | null")))
+   (init :initform nil
+         :documentation "es-expression | null")))
 (defmethod es->js ((es es-variable-declarator))
   (with-accessors ((id id) (init init)) es
     (concat (es->js id)
@@ -328,7 +357,8 @@
 
 ;;ARRAY EXPRESSION
 (defes es-array-expression (es-expression)
-  ((elements :documentation "(es-expression | es-spread-element | null)[]")))
+  ((elements :initform nil
+             :documentation "(es-expression | es-spread-element | null)[]")))
 (defmethod es->js ((es es-array-expression))
   (with-accessors ((elements elements)) es
     (join ", " (mapcar #'es->js elements))))
@@ -348,8 +378,10 @@
 
 ;;YIELD EXPRESSION
 (defes es-yield-expression (es-expression)
-  ((argument :documentation "es-expression | null")
-   (delegate :documentation "boolean")))
+  ((argument :initform nil
+             :documentation "es-expression | null")
+   (delegate :initform nil
+             :documentation "boolean")))
 (defmethod es->js ((es es-expression))
   (with-accessors ((argument argument) (delegate delegate)) es
     (concat (if delegate

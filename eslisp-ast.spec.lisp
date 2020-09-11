@@ -37,6 +37,13 @@
 (defvar fn-body
   (make-instance 'es-function-body
                  :body (list blck-stm)))
+(defvar fn-decl
+  (make-instance 'es-function-declaration
+                 :async t
+                 :generator t
+                 :body fn-body
+                 :params (list iden)
+                 :id fn-iden))
 
 
 (fiveam:test identifier-tests
@@ -64,4 +71,20 @@
     myVar;
   }
 }"
-             (es->js fn-body))))
+             (es->js fn-body)))
+  (is (equal "async function* myFn(myVar){
+  {
+    myVar;
+  }
+}"
+             (es->js fn-decl)))
+
+  (is (equal "return;"
+             (es->js (make-instance 'es-return-statement))))
+  (is (equal "return 23.7;"
+             (es->js (make-instance 'es-return-statement
+                                    :argument num-lit))))
+  (is (equal "break;"
+             (es->js (make-instance 'es-break-statement))))
+  (is (equal "continue;"
+             (es->js (make-instance 'es-continue-statement)))))
