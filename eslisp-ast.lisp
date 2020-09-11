@@ -26,6 +26,9 @@
                                (list :accessor (car slot))))
          slots))))
 
+(defun filter-class-type (list type)
+  (remove-if-not (lambda (x) (equal (type-of x) type)) list))
+
 
 ;;NODE
 (defclass es-node () ())
@@ -372,7 +375,23 @@
   ((local :initform (error "Must have local")
           :documentation "es-identifier")))
 
-;;IMPORT DECLARATION TODO
+
+;;IMPORT DECLARATION
+(defes es-import-declaration (es-module-declaration)
+  ((specifiers :documentation "(es-import-specifier | es-import-default-specifier | es-import-namespace-specifier)[]")
+   (source :initform (error "Must have a source.")
+           :documentation "es-literal")))
+(defmethod es->js ((es es-import-declaration))
+  (with-accessors ((source source) (specifiers specifiers)) es
+    (let ((defaults (filter-class-type specifiers 'e-import-default-specifier))
+          (namespace (filter-class-type specifiers 'e-import-namespace-specifier))
+          (normal (filter-class-type specifiers 'es-import-specifier)))
+      (concat "import "
+              (when namespace (es->js (car namespace)))
+              (when defaults (concat (when namespace ", ") (es->js (car defaults))))
+              (when normal (concat (when (or namespace defaults) ", ")
+                                   "{" (join ", " (mapcar #'es->js normal)) "}"))
+              ";"))))
 
 
 ;;IMPORT SPECIFIER
@@ -387,8 +406,18 @@
           (concat i " as " l)))))
 
 
-;;IMPORT DEFAULT SPECIFIER TODO
-;;IMPORT NAMESPACE SPECIFIER TODO
+;;IMPORT DEFAULT SPECIFIER
+(defes es-import-default-specifier (es-module-specifier) ())
+(defmethod es->js ((es es-import-declaration))
+  (es->js (local es)))
+
+
+;;IMPORT NAMESPACE SPECIFIER
+(defes es-import-namespace-specifier (es-module-specifier) ())
+(defmethod es->js ((es es-import-namespace-specifier))
+  (concat "* as " (es->js (local es))))
+
+
 ;;EXPORT NAMED DECLARATION TODO
 ;;EXPORT SPECIFIER TODO
 ;;EXPORT DEFAULT DECLARATION TODO
