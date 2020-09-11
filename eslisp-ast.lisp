@@ -172,7 +172,26 @@
               (concat (newline) "else " (es->js alternate))))))
 
 
-;;SWITCH STATEMENT TODO
+;;SWITCH STATEMENT
+(defes es-switch-statement (es-statement)
+  ((discriminant :initform (error "Must have a discriminant.")
+                 :documentation "es-expression")
+   (cases :documentation "es-switch-case[]")))
+(defmethod es->js ((es es-switch-statement))
+  (with-accessors ((discriminant discriminant) (cases cases)) es
+    (concat "switch (" (es->js discriminant) ")" "{" (newline)
+            (indent-string (join (newline)
+                                 (mapcar #'es->js cases)))
+            (newline) "}")))
+
+;;SWITCH CASE
+(defes es-switch-case (es-node)
+  ((test :documentation "es-expression | null")
+   (consequent :documentation "es-statement[]")))
+(defmethod es->js ((es es-switch-case))
+  (with-accessors ((test test) (consequent consequent)) es
+    (concat "case " (if test (es->js test) "default") ":" (newline)
+            (indent-string (join (newline) (mapcar #'es->js consequent))))))
 
 
 ;;THROW STATEMENT
@@ -184,10 +203,28 @@
     (concat "throw " (es->js argument))))
 
 
-;;TRY STATEMENT TODO
+;;TRY STATEMENT
+(defes es-try-statement (es-statement)
+  ((eblock :initform (error "Must have a block.")
+           :documentation "es-block-statement")
+   (handler :documentation "es-catch-clause | null")
+   (finalizer :documentation "es-block-statement | null")))
+(defmethod es->js ((es es-try-statement))
+  (with-accessors ((eblock eblock) (handler handler) (finalizer finalizer)) es
+    (concat "try " (es->js eblock) (newline)
+            (when handler (concat (es->js handler) (newline)))
+            (when finalizer (concat "finally " (es->js handler))))))
 
 
-;;CATCH CLAUSE TODO
+;;CATCH CLAUSE
+(defes es-catch-clause (es-node)
+  ((param :documentation "es-pattern | null")
+   (body :initform (error "Must have a body.")
+         :documentation "es-block-statement")))
+(defmethod es->js ((es es-catch-clause))
+  (with-accessors ((param param) (body body)) es
+    (concat "catch " (when param (concat "(" (es->js param) ") "))
+            (es->js body))))
 
 
 ;;WHILE STATEMENT
@@ -212,9 +249,45 @@
     (concat "do " (es->js body) " while(" (es->js test) ")")))
 
 
-;;FOR STATEMENT TODO
-;;FOR IN STATEMENT TODO
-;;FOR OF STATEMENT TODO
+;;FOR STATEMENT
+(defes es-for-statement (es-statement)
+  ((init :documentation "es-variable-declaration | es-expression | null")
+   (test :documentation "es-expression | null")
+   (update :documentation "es-expression | null")
+   (body :initform "Must have a body."
+         :documentation "es-statement")))
+(defmethod es->js ((es es-for-statement))
+  (with-accessors ((init init) (test test) (update update) (body body)) es
+    (concat "for ("
+            (when init (es->js init)) ";"
+            (when test (es->js test)) ";"
+            (when update (es->js update))
+            ") "
+            (es->js body))))
+
+
+;;FOR IN STATEMENT
+(defes es-for-in-statement (es-statement)
+  ((left :initform (error "Must have a left side.")
+         :documentation "es-variable-declaration | es-pattern")
+   (right :initform (error "Must have a right side.")
+          :documentation "es-expression")
+   (body :initform (error "Must have a body.")
+         :documentation "es-statement")))
+(defmethod es->js ((es es-for-in-statement))
+  (with-accessors ((left left) (right right) (body body)) es
+    (concat "for (" (es->js left) " in " (es->js right) ")"
+            (es->js body))))
+
+
+;;FOR OF STATEMENT
+(defes es-for-of-statement (es-for-in-statement)
+  ((await :documentation "boolean")))
+(defmethod es->js ((Es es-for-of-statement))
+  (with-accessors ((left left) (right right) (body body) (await await)) es
+    (concat "for " (when await "await") "("
+            (es->js left) " in " (es->js right) ")"
+            (es->js body))))
 
 
 ;;DECLARATION
@@ -223,14 +296,14 @@
 
 ;;FUNCTION DECLARATION
 (defes es-function-declaration (es-declaration es-function)
-  ((id :initform (error "Must have an id.")
-       :documentation "es-identifier")))
+  ((id :documentation "es-identifier")))
 (defmethod es->js ((es es-function-declaration))
   (with-accessors ((id id) (body body) (params params) (generator generator) (async async)) es
     (concat (when async "async ")
             (if generator
                 "function* "
                 "function ")
+            (when id (es->js id))
             "(" (join "," (mapcar #'es->js params)) ")"
             (es->js body))))
 
@@ -270,7 +343,13 @@
 
 
 ;;OBJECT EXPRESSION TODO
+
+
+
 ;;PROPERTY TODO
+
+
+
 ;;FUNCTION EXPRESSION TODO
 
 
@@ -418,7 +497,47 @@
   (concat "* as " (es->js (local es))))
 
 
-;;EXPORT NAMED DECLARATION TODO
-;;EXPORT SPECIFIER TODO
-;;EXPORT DEFAULT DECLARATION TODO
-;;EXPORT ALL DECLARATION TODO
+;;EXPORT NAMED DECLARATION
+(defes es-export-named-declaration (es-module-declaration)
+  ((edeclaration :documentation "es-declaration | null")
+   (specifiers :documentation "es-export-specifier[]")
+   (source :documentation "es-literal | null")))
+(defmethod es->js ((es es-export-named-declaration))
+  (with-accessors ((edeclaration edeclaration) (specifiers specifiers) (source source)) es
+    (cond (edeclaration (concat "export " (es->js edeclaration) ";"))
+          (specifiers (concat "export {" (join ", " (mapcar #'es->js specifiers)) "}"
+                              (when source (concat " from " (es->js source)))
+                              ";")))))
+
+
+;;EXPORT SPECIFIER
+(defes es-export-specifier (es-module-specifier)
+  ((exported :initform (error "Must have an exported.")
+             :documentation "es-identifier")))
+(defmethod es->js ((es es-export-specifier))
+  (with-accessors ((local local) (exported exported)) es
+    (let ((l (es->js local))
+          (e (es->js exported)))
+      (if (equal l e)
+          l
+          (concat e " as " l)))))
+
+
+;;EXPORT DEFAULT DECLARATION
+(defes es-export-default-declaration (es-module-declaration)
+  ((edeclaration :initform (error "Must have a declaration.") ;Has to be named edeclaration so it doesn't conflict with cl lock.
+                :Documentation "Es-function-declaration | es-class-declaration | es-expression")))
+(defmethod es->js ((es es-export-default-declaration))
+  (concat "export default " (es->js (edeclaration es)) ";"))
+
+
+;;EXPORT All DECLARATION
+(defes es-export-all-declaration (es-module-declaration)
+  ((source :initform (error "Must have a source.")
+           :documentation "es-literal")
+   (exported :documentation "es-identifier | null")))
+(defmethod es->js ((es es-export-all-declaration))
+  (with-accessors ((source source) (exported exported)) es
+    (concat "export * "
+            (when exported "as " (concat (es->js exported) " "))
+            "from " (es->js source) ";")))
