@@ -397,13 +397,11 @@
                    (shorthand shorthand)
                    (computed computed)) es
     (if (equal kind "init") ;;TODO Handle method / function
-        (if shorthand
-            (es->js kind)
-            (concat (if computed
-                        (concat "[" (es->js key) "]")
-                        (es->js key))
-                    ": " (es->js value)))
-        "TODO - handle get set")))
+        (cond (emethod (concat (es->js key) ": " (es->js value)))
+              (shorthand (es->js key))
+              (computed (concat "[" (es->js key) "]: " (es->js value)))
+              (t (concat (es->js key) ": " (es->js value))))
+        (concat kind " " (es->js key)))))
 
 
 ;;FUNCTION EXPRESSION
