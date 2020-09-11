@@ -509,9 +509,38 @@
   (concat "import(" (es->js (source es)) ")"))
 
 
-;;TEMPLATE LITERAL TODO
-;;TAGGED TEMPALTE EXPRESSION TODO
-;;TEMPLATE ELEMENT TODO
+;;TEMPLATE LITERAL
+(defes es-template-literal (es-expression)
+  ((elements :initform nil
+           :documentation "(es-template-element | es-expression)[]")))
+(defmethod es->js ((es es-template-literal))
+  (concat "`"
+          (join "" (mapcar (lambda (el)
+                             (if (equal (type-of el) 'es-template-element)
+                                 (es->js el)
+                                 (concat "${" (es->js el) "}")))
+                           (elements es)))
+          "`"))
+
+
+;;TAGGED TEMPLATE EXPRESSION
+(defes es-tagged-template-expression (es-expression)
+  ((tag :initform (error "Must have a tag.")
+        :documentation "es-expression")
+   (quasi :initform (error "Must have a quasi")
+          :documentation "es-template-literal")))
+(defmethod es->js ((es es-tagged-template-expression))
+  (concat (es->js (tag es)) (es->js (quasi es))))
+
+
+;;TEMPLATE ELEMENT
+(defes es-template-element (es-node)
+  ((value :initform ""
+          :documentation "string")))
+(defmethod es->js ((es es-template-element))
+  (value es))
+
+
 ;;OBJECT PATTERN TODO
 ;;ARRAY PATTERN TODO
 ;;REST ELEMENT TODO
