@@ -364,12 +364,46 @@
     (join ", " (mapcar #'es->js elements))))
 
 
-;;OBJECT EXPRESSION TODO
+;;OBJECT EXPRESSION
+(defes es-object-expression (es-expression)
+  ((properties :initform nil
+               :documentation "(es-property | es-spread-element)[]")))
+(defmethod es->js ((es es-object-expression))
+  (concat "{" (newline)
+          (indent-string (join (concat "," (newline))
+                               (mapcar #'es->js (properties es))))
+          (newline) "}"))
 
 
-
-;;PROPERTY TODO
-
+;;PROPERTY
+(defes es-property (es-node)
+  ((key :initform (error "Must have a key.")
+        :documentation "es-literal | es-identifier | es-expression")
+   (value :initform nil
+          :documentation "es-expression")
+   (kind :initform "init"
+         :documentation "'init' | 'get' | 'set'")
+   (emethod :initform nil
+           :documentation "boolean")
+   (shorthand :initform nil
+              :documentation "boolean - of form { key }")
+   (computed :initform nil
+             :documentation "boolean - of form {[key]: value}")))
+(defmethod es->js ((es es-property))
+  (with-accessors ((key key)
+                   (value value)
+                   (kind kind)
+                   (emethod emethod)
+                   (shorthand shorthand)
+                   (computed computed)) es
+    (if (equal kind "init") ;;TODO Handle method / function
+        (if shorthand
+            (es->js kind)
+            (concat (if computed
+                        (concat "[" (es->js key) "]")
+                        (es->js key))
+                    ": " (es->js value)))
+        "TODO - handle get set")))
 
 
 ;;FUNCTION EXPRESSION
@@ -414,10 +448,31 @@
   (concat "..." (es->js (argument es))))
 
 
-;;UNARY EXPRESSION TODO
-;;UNARY OPERATOR TODO
-;;UPDATE EXPRESSION TODO
-;;UPDATE OPERATOR TODO
+;;UNARY EXPRESSION
+(defes es-unary-expression (es-expression)
+  ((operator :initform (error "Must have an operator.")
+             :documentation "'-' | '+' | '!' | '~' | 'typeof' | 'void' | 'delete'")
+   (prefix :initform nil
+           :documentation "boolean")
+   (argument :initform (error "Must have an argument.")
+             :documentation "es-expression")))
+(defmethod es->js ((es es-unary-expression))
+  (with-accessors ((operator operator) (prefix prefix) (argument argument)) es
+    (concat operator (when (not prefix) " ") (es->js argument))))
+
+
+;;UPDATE EXPRESSION
+(defes es-update-expression (es-expression)
+  ((operator :initform (error "Must have an operator.")
+             :documentation "'++' | '--'")
+   (prefix :initform nil
+           :documentation "boolean")
+   (argument :initform (error "Must have an argument.")
+             :documentation "es-expression")))
+(defmethod es->js ((es es-update-expression))
+  (with-accessors ((operator operator) (prefix prefix) (argument argument)) es
+    (concat (when prefix operator) (es->js argument) (when (not prefix) operator))))
+
 ;;BINARY EXPRESSION TODO
 ;;BINARY OPERATOR TODO
 ;;ASSIGNMENT EXPRESSION TODO
