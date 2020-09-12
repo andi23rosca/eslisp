@@ -1,7 +1,10 @@
 ;;;; package.lisp
 (defpackage #:eslisp-ast
   (:use #:cl #:alexandria #:fiveam #:str)
-  (:shadow #:eslisp-ast :test :prefix))
+  (:shadow #:eslisp-ast :test :prefix)
+  (:shadow #:str :emptyp))
 
 (defpackage #:eslisp
-  (:use #:cl #:alexandria #:eslisp-ast #:str))
+  (:use #:cl #:alexandria #:eslisp-ast #:str)
+  (:shadow #:str :emptyp)
+  (:shadow #:eslisp-ast :body :value :prefix :test))

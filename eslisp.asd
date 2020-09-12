@@ -6,7 +6,7 @@
   :license  "Specify license here"
   :version "0.0.1"
   :serial t
-  :depends-on (:alexandria :fiveam)
+  :depends-on (:alexandria :fiveam :str)
   :components ((:file "package")
                (:file "helpers")
 	           (:file "macros")

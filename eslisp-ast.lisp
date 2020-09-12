@@ -369,10 +369,11 @@
   ((properties :initform nil
                :documentation "(es-property | es-spread-element)[]")))
 (defmethod es->js ((es es-object-expression))
-  (concat "{" (newline)
-          (indent-string (join (concat "," (newline))
-                               (mapcar #'es->js (properties es))))
-          (newline) "}"))
+  (let ((delimiter (if (> (length (properties es)) 3) (newline) " ")))
+    (concat "{" delimiter
+            (indent-string (join (concat "," delimiter)
+                                 (mapcar #'es->js (properties es))))
+            delimiter "}")))
 
 
 ;;PROPERTY
@@ -541,10 +542,27 @@
   (value es))
 
 
-;;OBJECT PATTERN TODO
-;;ARRAY PATTERN TODO
+;;OBJECT PATTERN
+(defes es-object-pattern (es-object-expression) ())
+
+
+;;ARRAY PATTERN
+(defes es-array-pattern (es-array-expression) ())
+
+
 ;;REST ELEMENT TODO
-;;ASSIGNMENT PATTERN TODO
+
+
+;;ASSIGNMENT PATTERN
+(defes es-assignment-pattern (es-pattern)
+  ((left :initform (error "Must have a left side.")
+         :documentation "es-pattern")
+   (right :initform (error "Must have a right side.")
+          :documentation "es-expression")))
+(defmethod es->js ((es es-assignment-pattern))
+  (concat (es->js (left es)) " = " (es->js (right es))))
+
+
 ;;CLASS TODO
 ;;CLASS BODY TODO
 ;;METHOD DEFINITION TODO
