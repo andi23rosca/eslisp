@@ -57,18 +57,31 @@
    (generator :initform nil
               :documentation "boolean - If function is a generator.")
    (async :initform nil
-          :documentation "boolean - If function is async.")))
+          :documentation "boolean - If function is async.")
+   (shorthand :initform nil
+              :documentation "boolean - shorthand for function expressions: myFn(){}.")))
 (defmethod es->js ((es es-function))
-  (with-accessors ((id id) (body body) (params params) (generator generator) (async async)) es
+  (with-accessors ((id id) (body body) (params params) (generator generator) (async async) (shorthand shorthand)) es
     (concat (when async "async ")
-            (if generator
-                "function* "
-                "function ")
+            (when shorthand
+              (if generator
+                  "function* "
+                  "function "))
             (when id (es->js id))
-            "(" (join "," (mapcar #'es->js params)) ") "
+            "(" (join ", " (mapcar #'es->js params)) ") "
             (es->js body))))
 
-;;ARROW FUNCTION EXPRESSION TODO
+;;ARROW FUNCTION EXPRESSION
+(defes es-arrow-function-expression (es-function es-expression)
+  ((body :initform (error "Must have a body")
+         :documentation "es-function-body | es-expression")))
+(defmethod es->js ((es es-array-expression))
+  (with-accessors ((body body) (params params) (async async)) es
+    (concat (when async "async ")
+            "(" (join ", " (mapcar #'es->js params)) ") => "
+            (if (equal (type-of body) 'es-object-expression)
+                (concat "(" (es->js body) ")")
+                (es->js body)))))
 
 
 ;;STATEMENT
@@ -406,8 +419,8 @@
 
 
 ;;FUNCTION EXPRESSION
-(defes es-function-expression (es-expression es-function) ())
-
+(defes es-function-expression (es-expression es-function)
+  ((shorthand :initform t)))
 
 ;;YIELD EXPRESSION
 (defes es-yield-expression (es-expression)
@@ -550,9 +563,6 @@
 (defes es-array-pattern (es-array-expression) ())
 
 
-;;REST ELEMENT TODO
-
-
 ;;ASSIGNMENT PATTERN
 (defes es-assignment-pattern (es-pattern)
   ((left :initform (error "Must have a left side.")
@@ -563,11 +573,65 @@
   (concat (es->js (left es)) " = " (es->js (right es))))
 
 
-;;CLASS TODO
-;;CLASS BODY TODO
-;;METHOD DEFINITION TODO
-;;CLASS DECLARATION TODO
-;;CLASS EXPRESSION TODO
+;;CLASS
+(defes es-class (es-node)
+  ((id :initform nil
+       :documentation "es-identifier | null")
+   (super-class :initform nil
+                :documentation "es-expression | null")
+   (body :initform (error "Must have a body.")
+         :documentation "es-class-body")))
+(defmethod es->js ((es es-class))
+  (with-accessors ((id id) (super-class super-class) (body body)) es
+      (concat "class "
+              (when id (es->js id))
+              (when super-class (concat "extends " (es->js super-class)))
+              " "
+              (es->js body))))
+
+
+;;CLASS BODY
+(defes es-class-body (es-node)
+  ((body :initform nil
+         :documentation "es-method-definition")))
+(defmethod es->js ((es es-class-body))
+  (concat "{" (newline)
+          (indent-string (join (newline)
+                               (mapcar #'es->js (body es))))
+          (newline) "}"))
+
+
+;;METHOD DEFINITION
+(defes es-method-definition (es-node)
+  ((key :initform (error "Must have a key.")
+        :documentation "es-expression")
+   (value :initform (error "Must have a value.")
+          :documentation "es-function-expression")
+   (kind :initform "method"
+         :documentation "constructor | method | get | set")
+   (computed :initform nil
+             :documentation "boolean")
+   (static :initform nil
+           :documentation "boolean")))
+(defmethod es->js ((es es-method-definition))
+  (with-accessors ((key key) (value value) (kind kind) (computed computed) (static static)) es
+    (if (equal kind "method")
+        (concat (es->js key)
+                (es->js value))
+        (concat (when static "static ")
+                (es->js key)
+                (es->js value)))))
+
+
+;;CLASS DECLARATION
+(defes es-class-declaration (es-class)
+  ((id :initform (error "Must have an id."))))
+
+
+;;CLASS EXPRESSION
+(defes es-class-expression (es-class) ())
+
+
 ;;META PROPERTY TODO
 
 
