@@ -531,18 +531,46 @@
    (property :initform (error "Must have a property.")
              :documentation "es-expression | es-identifier")
    (computed :initform nil
-             :documentation "boolean - When true of form a[b] else a.b")))
+             :documentation "boolean - When true of form a[b] else a.b")
+   (optional :initform nil
+             :documentation "boolean - optional chaining: a.b?")))
 (defmethod es->js ((es es-member-expression))
   (with-accessors ((object object) (property property) (computed computed)) es
-    (concat (es->js object)
+    (concat (if (equal (type-of object) 'es-member-expression)
+                (concat "(" (es->js object) ")")
+                (es->js object))
             (if computed
                 (concat "[" (es->js property) "]")
                 (concat "." (es->js property))))))
 
 
 ;;CHAIN EXPRESSION TODO
-;;CONDITIONAL EXPRESSION TODO
-;;CALL EXPRESSION TODO
+
+
+
+;;CONDITIONAL EXPRESSION
+(defes es-conditional-expression (es es-expression)
+  ((test :initform (error "Must have a test.")
+         :documentation "es-expression")
+   (alternate :initform (error "Must have alternate.")
+              :documentation "es-expression")
+   (consequent :initform (error "Must have a consequent.")
+               :documentation "es-expression")))
+(defmethod  es->js ((es es-conditional-expression))
+  (with-accessors ((test test) (alternate alternate) (consequent consequent)) es
+    (concat (es->js test) " ? " (es->js consequent) " : " (es->js alternate))))
+
+
+;;CALL EXPRESSION
+(defes es-call-expression (es-expression)
+  ((callee :initform (error "Must have a callee.")
+           :documentation "es-expression | es-super")
+   (arguments :initform nil
+              :documentation "(es-expression | es-spread-element)[]")))
+(defmethod es->js ((es es-call-expression))
+  (concat (es->js (callee es)) "("
+          (join ", " (mapcar #'es->js (arguments es)))
+          ")"))
 
 
 ;;NEW EXPRESSION
