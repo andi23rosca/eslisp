@@ -485,19 +485,67 @@
   (with-accessors ((operator operator) (prefix prefix) (argument argument)) es
     (concat (when prefix operator) (es->js argument) (when (not prefix) operator))))
 
-;;BINARY EXPRESSION TODO
-;;BINARY OPERATOR TODO
-;;ASSIGNMENT EXPRESSION TODO
-;;ASSIGNMENT OPERATOR TODO
-;;LOGICAL EXPRESSION TODO
-;;LOGICAL OPERATOR TODO
-;;MEMBER EXPRESSION TODO
+;;BINARY EXPRESSION
+(defes es-binary-expression (es-expression)
+  ((operator :initform (error "Must have an operator.")
+             :documentation "TODO add operators")
+   (left :initform (error "Must have a left side.")
+         :documentation "es-expression")
+   (right :initform (error "Must have a right side.")
+          :documentation "es-expression")))
+(defmethod es->js ((es es-binary-expression))
+  (with-accessors ((operator operator) (left left) (right right)) es
+    (concat (es->js left) " " (es->js operator) " " (es->js right))))
+
+
+;;ASSIGNMENT EXPRESSION
+(defes es-assignment-expression (es-expression)
+  ((operator :initform (error "Must have an operator.")
+             :documentation "TODO add operators")
+   (left :initform (error "Must have a left side.")
+         :documentation "es-expression")
+   (right :initform (error "Must have a right side.")
+          :documentation "es-pattern | es-expression")))
+(defmethod es->js ((es es-assignment-expression))
+  (with-accessors ((operator operator) (left left) (right right)) es
+    (concat (es->js left) " " (es->js operator) " " (es->js right))))
+
+
+;;LOGICAL EXPRESSION
+(defes es-logical-expression (es-expression)
+  ((operator :initform (error "Must have an operator.")
+             :documentation "|| | && | ??")
+   (left :initform (error "Must have a left side.")
+         :documentation "es-expression")
+   (right :initform (error "Must have a right side.")
+          :documentation "es-expression")))
+(defmethod es->js ((es es-logical-expression))
+  (with-accessors ((operator operator) (left left) (right right)) es
+    (concat (es->js left) " " (es->js operator) " " (es->js right))))
+
+
+;;MEMBER EXPRESSION
+(defes es-member-expression (es-expression es-pattern)
+  ((object :initform (error "Must have an object.")
+           :documentation "es-expression | es-super")
+   (property :initform (error "Must have a property.")
+             :documentation "es-expression | es-identifier")
+   (computed :initform nil
+             :documentation "boolean - When true of form a[b] else a.b")))
+(defmethod es->js ((es es-member-expression))
+  (with-accessors ((object object) (property property) (computed computed)) es
+    (concat (es->js object)
+            (if computed
+                (concat "[" (es->js property) "]")
+                (concat "." (es->js property))))))
+
+
 ;;CHAIN EXPRESSION TODO
 ;;CONDITIONAL EXPRESSION TODO
 ;;CALL EXPRESSION TODO
 
 
-;;NEW EXPRESSION TODO
+;;NEW EXPRESSION
 (defes es-new-expression (es-expression)
   ((callee :initform (error "Must have a callee.")
            :documentation "es-expression")
