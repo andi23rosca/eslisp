@@ -17,6 +17,7 @@
 
 (export 'defes)
 (defmacro defes (name parents slots)
+  "Defines a class and exports its name and slots"
   `(progn
      (export ',(concatenate 'list (list name) (mapcar (lambda (s) (car s)) slots)))
      (defclass ,name ,parents
@@ -63,7 +64,7 @@
 (defmethod es->js ((es es-function))
   (with-accessors ((id id) (body body) (params params) (generator generator) (async async) (shorthand shorthand)) es
     (concat (when async "async ")
-            (when shorthand
+            (when (not shorthand)
               (if generator
                   "function* "
                   "function "))
@@ -75,7 +76,7 @@
 (defes es-arrow-function-expression (es-function es-expression)
   ((body :initform (error "Must have a body")
          :documentation "es-function-body | es-expression")))
-(defmethod es->js ((es es-array-expression))
+(defmethod es->js ((es es-arrow-function-expression))
   (with-accessors ((body body) (params params) (async async)) es
     (concat (when async "async ")
             "(" (join ", " (mapcar #'es->js params)) ") => "
@@ -374,7 +375,7 @@
              :documentation "(es-expression | es-spread-element | null)[]")))
 (defmethod es->js ((es es-array-expression))
   (with-accessors ((elements elements)) es
-    (join ", " (mapcar #'es->js elements))))
+    (concat "[" (join ", " (mapcar #'es->js elements)) "]")))
 
 
 ;;OBJECT EXPRESSION
@@ -382,10 +383,13 @@
   ((properties :initform nil
                :documentation "(es-property | es-spread-element)[]")))
 (defmethod es->js ((es es-object-expression))
-  (let ((delimiter (if (> (length (properties es)) 3) (newline) " ")))
+  (let* ((delimiter (if (> (length (properties es)) 2) (newline) " "))
+         (props (join (concat "," delimiter)
+                      (mapcar #'es->js (properties es)))))
     (concat "{" delimiter
-            (indent-string (join (concat "," delimiter)
-                                 (mapcar #'es->js (properties es))))
+            (if (equal " " delimiter)
+                props
+                (indent-string props))
             delimiter "}")))
 
 
@@ -419,7 +423,7 @@
 
 
 ;;FUNCTION EXPRESSION
-(defes es-function-expression (es-expression es-function)
+(defes es-function-expression (es-function es-expression)
   ((shorthand :initform t)))
 
 ;;YIELD EXPRESSION

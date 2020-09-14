@@ -44,7 +44,26 @@
                  :body fn-body
                  :params (list iden)
                  :id fn-iden))
+(defvar fn-expr
+  (make-instance 'es-function-expression
+                 :body fn-body
+                 :params (list iden)))
 
+(defvar arr-expr
+  (make-instance 'es-array-expression
+                 :elements (list num-lit iden)))
+(defvar obj-expr
+  (make-instance
+   'es-object-expression
+   :properties (list (make-instance
+                      'es-property
+                      :key iden
+                      :shorthand t)
+                     (make-instance
+                      'es-property
+                      :key num-lit
+                      :computed t
+                      :value bool-lit-true))))
 
 (fiveam:test identifier-tests
   "Identifier"
@@ -72,12 +91,18 @@
   }
 }"
              (es->js fn-body)))
-  (is (equal "async function* myFn(myVar){
+  (is (equal "async function* myFn(myVar) {
   {
     myVar;
   }
 }"
              (es->js fn-decl)))
+  (is (equal "(myVar) {
+  {
+    myVar;
+  }
+}"
+             (es->js fn-expr)))
 
   (is (equal "return;"
              (es->js (make-instance 'es-return-statement))))
@@ -87,4 +112,16 @@
   (is (equal "break;"
              (es->js (make-instance 'es-break-statement))))
   (is (equal "continue;"
-             (es->js (make-instance 'es-continue-statement)))))
+             (es->js (make-instance 'es-continue-statement))))
+  (is (equal "if (23.7) {
+  myVar;
+}
+else 23.7"
+             (es->js (make-instance 'es-if-statement
+                                    :test num-lit
+                                    :consequent blck-stm
+                                    :alternate num-lit))))
+  (is (equal "[23.7, myVar]"
+             (es->js arr-expr)))
+  (is (equal "{ myVar, [23.7]: true }"
+             (es->js obj-expr))))
