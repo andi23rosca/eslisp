@@ -499,7 +499,7 @@
           :documentation "es-expression")))
 (defmethod es->js ((es es-binary-expression))
   (with-accessors ((operator operator) (left left) (right right)) es
-    (concat (es->js left) " " (es->js operator) " " (es->js right))))
+    (concat (es->js left) " " operator " " (es->js right))))
 
 
 ;;ASSIGNMENT EXPRESSION
@@ -512,7 +512,7 @@
           :documentation "es-pattern | es-expression")))
 (defmethod es->js ((es es-assignment-expression))
   (with-accessors ((operator operator) (left left) (right right)) es
-    (concat (es->js left) " " (es->js operator) " " (es->js right))))
+    (concat (es->js left) " " operator " " (es->js right))))
 
 
 ;;LOGICAL EXPRESSION
@@ -525,7 +525,7 @@
           :documentation "es-expression")))
 (defmethod es->js ((es es-logical-expression))
   (with-accessors ((operator operator) (left left) (right right)) es
-    (concat (es->js left) " " (es->js operator) " " (es->js right))))
+    (concat (es->js left) " " operator " " (es->js right))))
 
 
 ;;MEMBER EXPRESSION
@@ -539,13 +539,14 @@
    (optional :initform nil
              :documentation "boolean - optional chaining: a.b?")))
 (defmethod es->js ((es es-member-expression))
-  (with-accessors ((object object) (property property) (computed computed)) es
+  (with-accessors ((object object) (property property) (computed computed) (optional optional)) es
     (concat (if (equal (type-of object) 'es-member-expression)
                 (concat "(" (es->js object) ")")
                 (es->js object))
             (if computed
                 (concat "[" (es->js property) "]")
-                (concat "." (es->js property))))))
+                (concat "." (es->js property)))
+            (when optional "?"))))
 
 
 ;;CHAIN EXPRESSION TODO

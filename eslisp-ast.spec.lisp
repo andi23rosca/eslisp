@@ -124,4 +124,55 @@ else 23.7"
   (is (equal "[23.7, myVar]"
              (es->js arr-expr)))
   (is (equal "{ myVar, [23.7]: true }"
-             (es->js obj-expr))))
+             (es->js obj-expr)))
+  (is (equal "...[23.7, myVar]"
+             (es->js (make-instance 'es-spread-element
+                                    :argument arr-expr))))
+  (is (equal "!myVar"
+             (es->js (make-instance 'es-unary-expression
+                            :argument iden
+                            :operator "!"
+                            :prefix t))))
+  (is (equal "typeof myVar"
+             (es->js (make-instance 'es-unary-expression
+                                    :argument iden
+                                    :operator "typeof"))))
+  (is (equal "++myVar"
+             (es->js (make-instance 'es-update-expression
+                                    :argument iden
+                                    :operator "++"
+                                    :prefix t))))
+  (is (equal "myVar++"
+             (es->js (make-instance 'es-update-expression
+                                    :argument iden
+                                    :operator "++"))))
+  (is (equal "myVar + 23.7"
+             (es->js (make-instance 'es-binary-expression
+                                    :left iden
+                                    :right num-lit
+                                    :operator "+"))))
+  (is (equal "myVar && 23.7"
+             (es->js (make-instance 'es-logical-expression
+                                    :left iden
+                                    :right num-lit
+                                    :operator "&&"))))
+  (is (equal "myVar.myFn"
+             (es->js (make-instance 'es-member-expression
+                                    :object iden
+                                    :property fn-iden))))
+  (is (equal "myVar.myFn?"
+             (es->js (make-instance 'es-member-expression
+                                    :object iden
+                                    :property fn-iden
+                                    :optional t))))
+  (is (equal "myVar[myFn]"
+             (es->js (make-instance 'es-member-expression
+                                    :object iden
+                                    :property fn-iden
+                                    :computed t))))
+  (is (equal "myVar[myFn]?"
+             (es->js (make-instance 'es-member-expression
+                                    :object iden
+                                    :property fn-iden
+                                    :optional t
+                                    :computed t)))))
