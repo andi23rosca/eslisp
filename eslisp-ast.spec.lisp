@@ -64,6 +64,13 @@
                       :key num-lit
                       :computed t
                       :value bool-lit-true))))
+(defvar temp-element
+  (make-instance 'es-template-element
+                 :value "test str:"))
+(defvar temp-lit
+  (make-instance 'es-template-literal
+                 :elements (list temp-element
+                                 iden)))
 
 (fiveam:test identifier-tests
   "Identifier"
@@ -188,4 +195,10 @@ else 23.7"
   (is (equal "new myFn(myVar, 23.7)"
              (es->js (make-instance 'es-new-expression
                                     :callee fn-iden
-                                    :arguments (list iden num-lit))))))
+                                    :arguments (list iden num-lit)))))
+  (is (equal "`test str:${myVar}`"
+             (es->js temp-lit)))
+  (is (equal "myFn`test str:${myVar}`"
+             (es->js (make-instance 'es-tagged-template-expression
+                                    :quasi temp-lit
+                                    :tag fn-iden)))))
