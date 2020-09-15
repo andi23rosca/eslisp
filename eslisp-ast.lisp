@@ -554,7 +554,7 @@
 
 
 ;;CONDITIONAL EXPRESSION
-(defes es-conditional-expression (es es-expression)
+(defes es-conditional-expression (es-expression)
   ((test :initform (error "Must have a test.")
          :documentation "es-expression")
    (alternate :initform (error "Must have alternate.")

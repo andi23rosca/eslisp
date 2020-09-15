@@ -175,4 +175,17 @@ else 23.7"
                                     :object iden
                                     :property fn-iden
                                     :optional t
-                                    :computed t)))))
+                                    :computed t))))
+  (is (equal "myVar ? 23.7 : myFn"
+             (es->js (make-instance 'es-conditional-expression
+                                    :test iden
+                                    :consequent num-lit
+                                    :alternate fn-iden))))
+  (is (equal "myFn(myVar, 23.7)"
+             (es->js (make-instance 'es-call-expression
+                                    :callee fn-iden
+                                    :arguments (list iden num-lit)))))
+  (is (equal "new myFn(myVar, 23.7)"
+             (es->js (make-instance 'es-new-expression
+                                    :callee fn-iden
+                                    :arguments (list iden num-lit))))))
