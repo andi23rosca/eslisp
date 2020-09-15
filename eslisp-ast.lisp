@@ -733,14 +733,15 @@
            :documentation "es-literal")))
 (defmethod es->js ((es es-import-declaration))
   (with-accessors ((source source) (specifiers specifiers)) es
-    (let ((defaults (filter-class-type specifiers 'e-import-default-specifier))
-          (namespace (filter-class-type specifiers 'e-import-namespace-specifier))
+    (let ((defaults (filter-class-type specifiers 'es-import-default-specifier))
+          (namespace (filter-class-type specifiers 'es-import-namespace-specifier))
           (normal (filter-class-type specifiers 'es-import-specifier)))
       (concat "import "
               (when namespace (es->js (car namespace)))
               (when defaults (concat (when namespace ", ") (es->js (car defaults))))
               (when normal (concat (when (or namespace defaults) ", ")
                                    "{" (join ", " (mapcar #'es->js normal)) "}"))
+              " from " (es->js source)
               ";"))))
 
 

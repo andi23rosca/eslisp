@@ -202,3 +202,21 @@ else 23.7"
              (es->js (make-instance 'es-tagged-template-expression
                                     :quasi temp-lit
                                     :tag fn-iden)))))
+
+;Modules
+(defvar import-spec
+  (make-instance 'es-import-specifier
+                 :local iden
+                 :imported fn-iden))
+(defvar import-decl
+  (make-instance 'es-import-declaration
+                 :source (make-instance 'es-literal
+                                        :value "module")
+                 :specifiers (list import-spec)))
+
+(fiveam:test modules-test
+  "Modules: Immport & Export"
+  (is (equal "myFn as myVar"
+             (es->js import-spec)))
+  (is (equal "import {myFn as myVar} from 'module';"
+             (es->js import-decl))))
