@@ -46,6 +46,11 @@
 ;;EXPRESSION
 (defclass es-expression (es-node) ())
 
+;;Not part of estree
+(defes es-container (es-node)
+  ((items :initform nil)))
+(defmethod es->js ((es es-container))
+  (join (newline) (mapcar #'es->js (items es))))
 
 ;;FUNCTION
 (defes es-function (es-node)
@@ -759,7 +764,7 @@
 
 ;;IMPORT DEFAULT SPECIFIER
 (defes es-import-default-specifier (es-module-specifier) ())
-(defmethod es->js ((es es-import-declaration))
+(defmethod es->js ((es es-import-default-specifier))
   (es->js (local es)))
 
 

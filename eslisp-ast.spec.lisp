@@ -219,4 +219,10 @@ else 23.7"
   (is (equal "myFn as myVar"
              (es->js import-spec)))
   (is (equal "import {myFn as myVar} from 'module';"
-             (es->js import-decl))))
+             (es->js import-decl)))
+  (is (equal "import myVar from 'module';"
+             (es->js (make-instance 'es-import-declaration
+                                    :source (make-instance 'es-literal
+                                                           :value "module")
+                                    :specifiers (list (make-instance 'es-import-default-specifier
+                                                                     :local iden)))))))
