@@ -4,7 +4,7 @@ A common lisp macro that takes a lispified javascript DSL and converts it to jav
 ## Examples:
 ```
 (eslisp (let (my-var 2)
-        (my-other-var)))
+             (my-other-var)))
 ```
 turns to
 ```js
