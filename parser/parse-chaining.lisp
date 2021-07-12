@@ -1,7 +1,5 @@
 (cl:in-package :eslisp)
 
-(define-condition chaining-arguments-count-error (error) ())
-
 (defun is-hardcoded-computed (expr)
   (and (listp expr) (equal (car expr) :expr)))
 (defun is-computed-subtype (expr)
@@ -19,7 +17,7 @@
   (let ((rev (reverse expr))
         (res nil))
     (if (< (length expr) 2)
-        (error 'chaining-arguments-count-error)
+        (setf res (car expr))
         (let ((expanded
                 (mapcar (lambda (e)
                           (cond ((is-computed-subtype e) (list :expr e))
@@ -40,10 +38,11 @@
 
 (defun parse-chaining (expr)
   (let* ((args (cdr expr))
-         (parsed (mapcar (lambda (a)
-                           (if (and (listp a)
-                                    (equal (car a) :expr))
-                               (list :expr (parse-eslisp (cadr a)))
-                               (parse-eslisp a)))
-                         args)))
+         (parsed
+           (mapcar (lambda (a)
+                     (if (and (listp a)
+                              (equal (car a) :expr))
+                         (list :expr (parse-eslisp (cadr a)))
+                         (parse-eslisp a)))
+                   args)))
     (build-chain parsed)))
