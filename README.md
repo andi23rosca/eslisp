@@ -12,7 +12,7 @@ my-test-var ;; Becomes myTestVar
 *my-test-var* ;; Becomes MY_TEST_VAR
 ```
 
-For global js objects (found here)[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects] 
+For global js objects [found here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects) 
 use special keywords found in `/parser/parse-symbol.lisp` in the `*global-symbols*` plist.
 
 As an example:
