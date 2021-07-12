@@ -20,7 +20,8 @@
               ;; When expression is a list we parse the syntax
               (switch (sym :test #'symbol-test)
                 ('(const let) (parse-declaration expr))
-                ('this (make-instance 'es-this-expression))))
+                ('this (make-instance 'es-this-expression))
+                ('@ (parse-chaining expr))))
         (when (not result)
           (setf result :todo))
         result)

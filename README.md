@@ -43,3 +43,22 @@ to
 ``` js
 const myVar = 3;
 ```
+
+### Chaining
+
+No JS code is complete withouth being able to chain properties and functions with `.`.
+
+``` common-lisp
+(@ my-obj my-prop) ;; Becomes myObj.myProp
+(@ my-obj (my-fn 3)) ;; Becomes myObj.myFn(3)
+(@ my-obj 1) ;; Becomes myObj[1]
+(@ my-obj "some string") ;; Becomes myObj["some string"]
+```
+
+To force a chaining to use the `[]` notation instead of `.` tag it with `:expr` like so:
+
+``` common-lisp
+(@ my-obj (:expr my-prop)) ;; Becomes myObj[myProp]
+(@ my-obj (:expr (my-fn 3))) ;; Becomes myObj[myFn(3)]
+```
+

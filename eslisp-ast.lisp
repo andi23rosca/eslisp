@@ -44,6 +44,7 @@
 
 
 ;;EXPRESSION
+(export 'es-expression)
 (defclass es-expression (es-node) ())
 
 ;;Not part of estree
