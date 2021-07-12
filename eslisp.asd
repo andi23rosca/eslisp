@@ -12,4 +12,5 @@
 	           (:file "macros")
                (:file "eslisp-ast")
                (:file "eslisp")
+               (:file "parser")
                (:file "eslisp-ast.spec")))

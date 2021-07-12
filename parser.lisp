@@ -9,21 +9,6 @@
       (find sym test :test #'equal)
       (equal test sym)))
 
-(defun parse-declarator (dec)
-  (make-instance 'es-variable-declarator
-                 :id (parse-eslisp (car dec))
-                 :init (when (cadr dec)
-                         (parse-eslisp (cadr dec)))))
-(defun parse-declaration (expr)
-  (let ((kind (stringify (car expr)))
-        (vars (cdr expr)))
-    (make-instance 'es-container
-                   :items (mapcar
-                           (lambda (dec)
-                             (make-instance 'es-variable-declaration
-                                            :kind kind
-                                            :declarations (list (parse-declarator dec))))
-     vars))))
 
 
 (defun parse-eslisp (expr)
@@ -32,9 +17,15 @@
       (let ((result nil)
             (sym (car expr)))
         (setf result
+              ;; When expression is a list we parse the syntax
               (switch (sym :test #'symbol-test)
-                ('(const let) (parse-declaration expr))))
+                ('(const let) (parse-declaration expr))
+                ('this (make-instance 'es-this-expression))))
         (when (not result)
           (setf result :todo))
         result)
-      (make-instance 'es-literal :value (stringify expr))))
+      ;; Case when the expression is not a list
+      ;; It can either be a literal or an identifier
+      (if (is-jslit expr)
+          (parse-literal expr)
+          (parse-symbol expr))))

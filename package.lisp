@@ -5,6 +5,6 @@
   (:shadow #:str :emptyp))
 
 (defpackage #:eslisp
-  (:use #:cl #:alexandria #:eslisp-ast #:str)
+  (:use #:cl #:alexandria #:eslisp-ast #:str #:fiveam)
   (:shadow #:str :emptyp)
   (:shadow #:eslisp-ast :body :value :prefix :test))
