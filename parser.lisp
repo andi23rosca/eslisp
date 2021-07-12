@@ -12,7 +12,7 @@
 
 
 (defun parse-eslisp (expr)
-  (print expr)
+  ;; (print expr)
   (if (listp expr)
       (let ((result nil)
             (sym (car expr)))

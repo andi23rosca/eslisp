@@ -9,7 +9,7 @@
 (defun parse-declaration (expr)
   (let ((kind (stringify (car expr)))
         (vars (cdr expr)))
-                                        ;Using container to spread out declarations as different statements.
+    ;Using container to spread out declarations as different statements.
     (make-instance 'es-container
                    :items (mapcar
                            (lambda (dec)
@@ -21,7 +21,12 @@
 
 (fiveam:test parse-declaration-test
   "Parse declaration"
-  (is (equal (ast->javascript (list (parse-declaration '(let (my-var 1) (*my-class 2) (*my-const* 3)))))
+  (is (equal (ast->javascript (list (parse-declaration
+                                     '(let (my-var 1)
+                                       (*my-class :true)
+                                       (*my-const* "asd")
+                                       (test something)))))
              '("let myVar = 1;
-let MyClass = 2;
-let MY_CONST = 3;"))))
+let MyClass = true;
+let MY_CONST = 'asd';
+let test = something;"))))
