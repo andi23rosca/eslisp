@@ -22,8 +22,10 @@
                 ('(const let) (parse-declaration expr))
                 ('this (make-instance 'es-this-expression))
                 ('@ (parse-chaining expr))))
+        ;; When no special keyword found it means
+        ;; that the list is a user-made function call
         (when (not result)
-          (setf result :todo))
+          (setf result (parse-fncall expr)))
         result)
       ;; Case when the expression is not a list
       ;; It can either be a literal or an identifier
